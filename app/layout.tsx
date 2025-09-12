@@ -1,9 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import TawkChat from '@/components/TawkChat';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Frendi.web.id - Software Engineer & Automation Specialist',
@@ -36,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-slate-900 text-white`}>
+      <body className="font-sans bg-slate-900 text-white">
         {children}
         <TawkChat />
       </body>

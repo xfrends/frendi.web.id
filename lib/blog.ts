@@ -72,8 +72,8 @@ interface DatabasePageProperties {
   };
 }
 
-interface DatabasePage extends PageObjectResponse {
-  properties: DatabasePageProperties;
+interface DatabasePage extends Omit<PageObjectResponse, 'properties'> {
+  properties: DatabasePageProperties & Record<string, unknown>;
 }
 
 export async function getAllPosts(): Promise<BlogPost[]> {
@@ -119,9 +119,19 @@ export async function getPostBySlug(slug: string): Promise<BlogPostDetail | null
     title: properties?.Title?.title?.[0]?.plain_text || 'Untitled',
     slug: properties?.Slug?.rich_text?.[0]?.plain_text || '',
     thumbnail: properties?.Thumbnail?.files?.[0]?.file?.url || '',
-    coverImage: page?.cover?.type === 'external' ? page?.cover?.external?.url : page?.cover?.file?.url || '',
+    coverImage: (() => {
+      const pageCover = (page as PageObjectResponse).cover;
+      if (!pageCover) return '';
+      if (pageCover.type === 'external') {
+        return pageCover.external.url;
+      }
+      if (pageCover.type === 'file') {
+        return pageCover.file.url;
+      }
+      return '';
+    })(),
     description: properties?.Summary?.rich_text?.[0]?.plain_text || '',
-    author: properties?.Author?.people?.[0]?.name || 'Anonymous',
+    author: properties?.Author?.rich_text?.[0]?.plain_text || 'Anonymous',
     tags: properties?.Tags?.multi_select?.map((tag: { name: string }) => tag.name) || [],
     publishedAt: properties?.['Publication Date']?.date?.start || new Date().toISOString(),
     content: blocks as BlockObjectResponse[],

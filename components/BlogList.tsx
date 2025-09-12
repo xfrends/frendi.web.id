@@ -6,8 +6,8 @@ import Link from "next/link";
 export default async function BlogList() {
   const blogPosts = await getAllPosts();
   return (
-    <section id="blog" className="py-20 px-6">
-      <div className="container mx-auto max-w-6xl">
+    <section id="blog" className="full bg-[var(--secondary-color)]/20 py-16 md:py-24">
+      <div className="container mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-8">
           {blogPosts.map((post, index) => (
             <Link key={index} href={`/blog/${post.slug}`} className="block">

@@ -134,7 +134,7 @@ export default function AutomationPage() {
                 </section>
 
                 {/* Case Studies Section */}
-                <section className="w-full py-16 md:py-24">
+                <section className="w-full bg-[var(--secondary-color)]/20 py-16 md:py-24">
                     <div className="container mx-auto px-4 md:px-6">
                         <div className="mb-12 text-center">
                             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
@@ -146,8 +146,8 @@ export default function AutomationPage() {
                         </div>
                         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                             {caseStudies.map((study, index) => (
-                                <div key={index} className="flex flex-col overflow-hidden rounded-lg bg-[var(--secondary-color)]/30">
-                                    <div className="relative w-full aspect-[16/9]">
+                                <div key={index} className="flex flex-col overflow-hidden">
+                                    <div className="relative w-full aspect-[16/9] bg-gray-800/50 rounded-xl border border-gray-700/50 transition hover:scale-105 hover:shadow-x">
                                         <Image
                                             src={study.imageUrl}
                                             alt={study.title}
@@ -175,7 +175,7 @@ export default function AutomationPage() {
                 </section>
 
                 {/* Benefits Section */}
-                <section className="w-full bg-[var(--secondary-color)]/20 py-16 md:py-24">
+                <section className="w-full py-10 md:py-16 lg:py-20 bg-[var(--secondary-color)]/20">
                     <div className="container mx-auto px-4 md:px-6">
                         <div className="mb-12 text-center">
                             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
@@ -185,7 +185,7 @@ export default function AutomationPage() {
                                 Otomatisasi bukan hanya tentang teknologi, ini tentang membuka potensi pertumbuhan bisnis Anda.
                             </p>
                         </div>
-                        <div className="mx-auto grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="mx-auto grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                             {benefits.map((benefit, index) => (
                                 <div
                                     key={index}

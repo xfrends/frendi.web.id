@@ -100,34 +100,36 @@ export default function AboutPage() {
     ];
 
     return (
-        <main className="min-h-screen bg-slate-900">
+        <main className="min-h-screen bg-[var(--background-color)]">
             <Header />
             <div className="flex-1 px-4 py-16 md:px-40 mt-20">
-                <div className="mx-auto flex max-w-[960px] flex-1 flex-col gap-12">
+                <div className="mx-auto flex flex-1 flex-col gap-12">
                     {/* Header */}
                     <div className="text-center">
                         <h1 className="text-5xl font-bold leading-tight tracking-tight">About Me</h1>
                         <p className="mt-2 text-lg text-gray-400">My journey in technology and software engineering.</p>
                     </div>
+                </div>
 
-                    {/* Profile Section */}
-                    <section className="flex flex-col items-center gap-6 rounded-lg bg-gray-800/50 p-8">
-                        <div
-                            className="h-40 w-40 rounded-full border-4 border-gray-700 shadow-lg bg-center bg-cover"
-                            style={{
-                                backgroundImage: `url("/ilustrasi.png")`
-                            }}
-                        />
-                        <div className="text-center">
-                            <h2 className="text-3xl font-bold leading-tight tracking-[-0.015em]">Frendi Triarista</h2>
-                            <p className="text-lg font-medium leading-normal text-[var(--primary-color)]">
-                                Software Engineer | Automation Specialist | Mentor
-                            </p>
-                        </div>
-                    </section>
+                {/* Profile Section */}
+                <section className="flex mx-auto max-w-[960px] flex-col items-center gap-6 rounded-lg bg-gray-800/50 p-8 mt-16">
+                    <div
+                        className="h-40 w-40 rounded-full border-4 border-gray-700 shadow-lg bg-center bg-cover"
+                        style={{
+                            backgroundImage: `url("/ilustrasi.png")`
+                        }}
+                    />
+                    <div className="text-center">
+                        <h2 className="text-3xl font-bold leading-tight tracking-[-0.015em]">Frendi Triarista</h2>
+                        <p className="text-lg font-medium leading-normal text-[var(--primary-color)]">
+                            Software Engineer | Automation Specialist | Mentor
+                        </p>
+                    </div>
+                </section>
 
-                    {/* Experience Section */}
-                    <section>
+                {/* Experience Section */}
+                <section className="w-full py-10 md:py-16 lg:py-20 mt-20">
+                    <div className="container mx-auto px-4 md:px-6">
                         <h2 className="mb-6 text-3xl font-bold leading-tight tracking-[-0.015em]">Work Experience</h2>
                         <div className="relative border-l-2 border-[var(--primary-color)] pl-8">
                             {experiences.map((exp, index) => (
@@ -139,10 +141,12 @@ export default function AboutPage() {
                                 </div>
                             ))}
                         </div>
-                    </section>
+                    </div>
+                </section>
 
-                    {/* Skills Section */}
-                    <section>
+                {/* Skills Section */}
+                <section className="w-full py-10 md:py-16 lg:py-20">
+                    <div className="container mx-auto px-4 md:px-6">
                         <h2 className="mb-6 text-3xl font-bold leading-tight tracking-[-0.015em]">Technical Skills</h2>
                         <div className="flex flex-wrap gap-3">
                             {skills.map((skill, index) => (
@@ -154,20 +158,24 @@ export default function AboutPage() {
                                 </span>
                             ))}
                         </div>
-                    </section>
+                    </div>
+                </section>
 
-                    {/* Philosophy Section */}
-                    <section className="rounded-lg bg-gray-800/50 p-8">
+                {/* Philosophy Section */}
+                <section className="w-full py-10 md:py-16 lg:py-20">
+                    <div className="container mx-auto px-4 md:px-6 rounded-lg bg-gray-800/50 p-8">
                         <h2 className="mb-4 text-3xl font-bold leading-tight tracking-[-0.015em]">Philosophy</h2>
                         <blockquote className="border-l-4 border-[var(--primary-color)] pl-6 text-lg italic text-gray-300">
                             "I believe automation is not just about efficiency, but about freeing up time to focus on more strategic matters. In mentoring, I am dedicated to helping engineers reach their full potential by sharing my knowledge and experience."
                         </blockquote>
-                    </section>
+                    </div>
+                </section>
 
-                    {/* Portfolio Section */}
-                    <section>
+                {/* Portfolio Section */}
+                <section className="w-full py-10 md:py-16 lg:py-20">
+                    <div className="container mx-auto px-4 md:px-6">
                         <h2 className="mb-6 text-3xl font-bold leading-tight tracking-[-0.015em]">Portfolio Highlights</h2>
-                        <div className="grid grid-cols-1 gap-8 md:grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-[repeat(auto-fit,minmax(350px,1fr))]">
                             {portfolioItems.map((item, index) => (
                                 <div
                                     key={index}
@@ -188,8 +196,8 @@ export default function AboutPage() {
                                 </div>
                             ))}
                         </div>
-                    </section>
-                </div>
+                    </div>
+                </section>
             </div>
             <Footer />
         </main>

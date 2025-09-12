@@ -5,8 +5,8 @@ import Link from 'next/link';
 
 export default function Services() {
   return (
-    <section id="services" className="py-20 px-6">
-      <div className="container mx-auto max-w-6xl">
+    <section id="services" className="w-full py-10 md:py-16 lg:py-20">
+      <div className="container mx-auto px-4 md:px-6">
         <div className="text-center mb-16">
           <p className="text-blue-400 text-sm font-medium mb-2 tracking-wide uppercase">
             My Services
