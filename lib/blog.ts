@@ -44,9 +44,9 @@ interface DatabasePageProperties {
   };
   Author: {
     id: string;
-    type: 'rich_text';
-    rich_text: Array<{
-      plain_text: string;
+    type: 'people';
+    people: Array<{
+      name: string;
     }>;
   };
   Tags: {
@@ -131,7 +131,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPostDetail | null
       return '';
     })(),
     description: properties?.Summary?.rich_text?.[0]?.plain_text || '',
-    author: properties?.Author?.rich_text?.[0]?.plain_text || 'Anonymous',
+    author: properties?.Author?.people?.[0]?.name || 'Anonymous',
     tags: properties?.Tags?.multi_select?.map((tag: { name: string }) => tag.name) || [],
     publishedAt: properties?.['Publication Date']?.date?.start || new Date().toISOString(),
     content: blocks as BlockObjectResponse[],

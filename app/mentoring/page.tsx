@@ -187,13 +187,23 @@ export default function MentoringPage() {
                 </section>
 
                 {/* CTA Section */}
-                <section className="w-full bg-[var(--secondary-color)]/20 py-16 md:py-24">
-                    <div className="container mx-auto px-4 md:px-6 text-center">
-                        <Link href="https://tawk.to/frendi" target="_blank" className="block">
-                            <Button size="lg" className="h-14 px-8 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white">
-                                Free Consult Now
-                            </Button>
-                        </Link>
+                <section className="w-full py-16 md:py-24">
+                    <div className="container mx-auto px-4 text-center md:px-6">
+                        <div className="mx-auto max-w-2xl">
+                            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+                                Siap Melangkah ke Level Karier Berikutnya?
+                            </h2>
+                            <p className="mt-4 text-lg text-[var(--text-secondary)]">
+                                Bangun masa depan karier Anda bersama mentor berpengalaman. Jadwalkan sesi konsultasi gratis sekarang.
+                            </p>
+                            <div className="mt-8 flex justify-center">
+                                <Link href="https://tawk.to/frendi" target="_blank" className="block">
+                                    <Button size="lg" className="h-12 px-8 font-bold bg-blue-600 hover:bg-blue-700 text-white">
+                                        Free Consultation
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>

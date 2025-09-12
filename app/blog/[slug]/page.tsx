@@ -75,7 +75,7 @@ export default async function BlogPost({
                             {/* Author and Date */}
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="flex flex-col h-full w-auto p-2 bg-gray-800/50 rounded-xl border border-gray-700/50 transition hover:scale-105 hover:shadow-x">
-                                    <span className="text-sm font-semibold text-slate-400">Written by</span>
+                                    {/* <span className="text-sm font-semibold text-slate-400">Written by</span> */}
                                     <span className="text-white">{post.author}</span>
                                 </div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
