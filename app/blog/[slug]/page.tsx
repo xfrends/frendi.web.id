@@ -28,7 +28,7 @@ const FALLBACK_METADATA: Metadata = {
         description: 'Read detailed articles about software development, automation, and tech insights.',
         images: [
             {
-                url: 'https://frendi.web.id/og-image.png',
+                url: '/logo.png',
             },
         ],
     },
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
             description: post.description,
             images: [
                 {
-                    url: post.thumbnail || 'https://frendi.web.id/logo.png',
+                    url: post.thumbnail || '/logo.png',
                 },
             ],
         },
