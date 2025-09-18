@@ -1,4 +1,4 @@
-import { getPostDetail, getBlogStaticParams } from '@/lib/blog';
+import { getPostDetail } from '@/lib/blog';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -16,9 +16,7 @@ const getEmbedUrl = (url: string) => {
     return url;
 };
 
-export async function generateStaticParams() {
-    return getBlogStaticParams();
-}
+export const dynamic = 'force-dynamic';
 
 const FALLBACK_METADATA: Metadata = {
     title: 'Blog Detail - Frendi.web.id',
