@@ -10,7 +10,7 @@ export default async function BlogList() {
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid md:grid-cols-2 gap-8">
           {blogPosts.map((post, index) => (
-            <Link key={index} href={`/blog/${post.slug}`} className="block">
+            <Link key={index} href={`/blog/${post.id}`} className="block">
               <Card key={index} className="blog-card border-slate-700 group hover:scale-105 transition-all duration-300 cursor-pointer">
                 <CardContent className="p-0">
                   {/* Image Placeholder */}

@@ -26,6 +26,12 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * The root layout of the application.
+ * It renders the given children and adds a TawkChat component if the application is in production mode.
+ * @param {React.ReactNode} children - The children to render.
+ * @returns {JSX.Element} - The root layout of the application.
+ */
 export default function RootLayout({
   children,
 }: {
@@ -35,7 +41,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans bg-slate-900 text-white">
         {children}
-        <TawkChat />
+        {process.env.NODE_ENV === 'production' ? (
+          <TawkChat />
+        ) : null}
       </body>
     </html>
   );

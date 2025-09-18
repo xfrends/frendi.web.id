@@ -1,6 +1,6 @@
-import { BlogPost, BlogPostDetail, NotionPage } from '@/types/blog';
-import { getBlocks, getDatabase, getPage, getPageIdBySlug } from './notion';
-import { BlockObjectResponse, PageObjectResponse, PartialPageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { BlogPost, BlogPostDetail } from '@/types/blog';
+import { getBlocks, getPage, getDataSource } from './notion';
+import { BlockObjectResponse, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 
 interface DatabasePageProperties {
   Title: {
@@ -76,18 +76,31 @@ interface DatabasePage extends Omit<PageObjectResponse, 'properties'> {
   properties: DatabasePageProperties & Record<string, unknown>;
 }
 
+const normalizeSlug = (slug?: string) => slug?.trim().toLowerCase() ?? '';
+
+const formatNotionPageId = (value?: string) => {
+  if (!value) return '';
+  const compact = value.replace(/-/g, '');
+  if (!/^[0-9a-f]{32}$/i.test(compact)) {
+    return '';
+  }
+  return `${compact.slice(0, 8)}-${compact.slice(8, 12)}-${compact.slice(12, 16)}-${compact.slice(16, 20)}-${compact.slice(20)}`;
+};
+
 export async function getAllPosts(): Promise<BlogPost[]> {
-  const pages = await getDatabase();
+  const pages = await getDataSource();
+
   if (!Array.isArray(pages)) {
     console.error('Expected pages array but got:', typeof pages);
     return [];
   }
+
   return pages.map((page: any) => {
     const properties = page.properties;
     return {
       id: page.id,
       title: properties?.Title?.title?.[0]?.plain_text || 'Untitled',
-      slug: properties?.Slug?.rich_text?.[0]?.plain_text || '',
+      slug: normalizeSlug(properties?.Slug?.rich_text?.[0]?.plain_text),
       thumbnail: properties?.Thumbnail?.files?.[0]?.file?.url || '',
       coverImage: page?.cover?.type === 'external' ? page?.cover?.external?.url : page?.cover?.file?.url || '',
       description: properties?.Summary?.rich_text?.[0]?.plain_text || '',
@@ -98,29 +111,60 @@ export async function getAllPosts(): Promise<BlogPost[]> {
   });
 }
 
-export async function getPostBySlug(slug: string): Promise<BlogPostDetail | null> {
+export async function getPostDetail(identifier: string): Promise<BlogPostDetail | null> {
+  const candidateId = formatNotionPageId(identifier);
+  const normalizedSlug = normalizeSlug(identifier);
 
-  const pageId = await getPageIdBySlug(slug);
-  if (!pageId) {
-    return null;
+  let page: PageObjectResponse | null = null;
+
+  if (candidateId) {
+    try {
+      page = await getPage(candidateId) as PageObjectResponse;
+    } catch (error) {
+      console.warn(`Failed to fetch page by id ${candidateId}:`, error);
+    }
   }
 
-  const page = await getPage(pageId);
   if (!page) {
-    return null;
+    const pages = await getDataSource();
+
+    if (!Array.isArray(pages)) {
+      console.error('Expected pages array but got:', typeof pages);
+      return null;
+    }
+
+    const matchedPage = pages.find((candidate: any) => {
+      const pageSlug = normalizeSlug(candidate?.properties?.Slug?.rich_text?.[0]?.plain_text);
+      if (candidateId && candidate?.id === candidateId) {
+        return true;
+      }
+      return normalizedSlug && pageSlug === normalizedSlug;
+    });
+
+    if (!matchedPage) {
+      console.warn(`No blog post found for identifier: ${identifier}`);
+      return null;
+    }
+
+    page = await getPage(matchedPage.id) as PageObjectResponse;
   }
 
-  const blocks = await getBlocks(page.id);
+  const pageId = page.id;
+  const blocks = await getBlocks(pageId);
+  if (!Array.isArray(blocks)) {
+    console.error('Expected blocks array but got:', typeof blocks);
+    return null;
+  }
 
   const { properties } = page as unknown as { properties: DatabasePageProperties };
 
   return {
-    id: page.id,
+    id: pageId,
     title: properties?.Title?.title?.[0]?.plain_text || 'Untitled',
     slug: properties?.Slug?.rich_text?.[0]?.plain_text || '',
     thumbnail: properties?.Thumbnail?.files?.[0]?.file?.url || '',
     coverImage: (() => {
-      const pageCover = (page as PageObjectResponse).cover;
+      const pageCover = page.cover;
       if (!pageCover) return '';
       if (pageCover.type === 'external') {
         return pageCover.external.url;
@@ -139,18 +183,17 @@ export async function getPostBySlug(slug: string): Promise<BlogPostDetail | null
 }
 
 export async function fetchLatestPosts(count: number = 2): Promise<BlogPost[]> {
-  const pages = await getDatabase();
+  const pages = await getDataSource();
   if (!Array.isArray(pages)) {
     console.error('Expected pages array but got:', typeof pages);
     return [];
   }
   const posts = pages.map((page: any) => {
     const properties = page.properties;
-    console.debug('Thumbnail:', properties?.Thumbnail?.files?.[0]?.file?.url);
     return {
       id: page.id,
       title: properties?.Title?.title?.[0]?.plain_text || 'Untitled',
-      slug: properties?.Slug?.rich_text?.[0]?.plain_text || '',
+      slug: normalizeSlug(properties?.Slug?.rich_text?.[0]?.plain_text),
       thumbnail: properties?.Thumbnail?.files?.[0]?.file?.url || '',
       coverImage: page?.cover?.type === 'external' ? page?.cover?.external?.url : page?.cover?.file?.url || '',
       description: properties?.Summary?.rich_text?.[0]?.plain_text || '',
@@ -163,4 +206,18 @@ export async function fetchLatestPosts(count: number = 2): Promise<BlogPost[]> {
   return posts
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     .slice(0, count);
+}
+
+export async function getBlogStaticParams(): Promise<Array<{ slug: string }>> {
+  const pages = await getDataSource();
+
+  if (!Array.isArray(pages)) {
+    console.error('Expected pages array but got:', typeof pages);
+    return [];
+  }
+
+  return pages
+    .map((page: { id?: string }) => page?.id)
+    .filter((id): id is string => Boolean(id))
+    .map((id) => ({ slug: id }));
 }

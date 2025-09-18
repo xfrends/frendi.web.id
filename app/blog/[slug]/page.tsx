@@ -1,19 +1,27 @@
-import { getAllPosts, getPostBySlug } from '@/lib/blog';
+import { getPostDetail, getBlogStaticParams } from '@/lib/blog';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CopyButton } from '@/components/ui/copy-button';
+import { getDataSourcePageIds } from '@/lib/notion';
+
+const getEmbedUrl = (url: string) => {
+    const youtubeRegex = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/i;
+    const match = url.match(youtubeRegex);
+    if (match && match[1]) {
+        return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    return url;
+};
 
 export async function generateStaticParams() {
-    const posts = await getAllPosts();
-    return posts.map((post) => ({
-        slug: post.slug,
-    }));
+    return getBlogStaticParams();
 }
 
-export const metadata = {
+const FALLBACK_METADATA: Metadata = {
     title: 'Blog Detail - Frendi.web.id',
     description: 'Read detailed articles about software development, automation, and tech insights.',
     openGraph: {
@@ -27,28 +35,38 @@ export const metadata = {
     },
 };
 
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+    const post = await getPostDetail(params.slug);
+
+    if (!post) {
+        return FALLBACK_METADATA;
+    }
+
+    return {
+        title: post.title,
+        description: post.description,
+        openGraph: {
+            title: post.title,
+            description: post.description,
+            images: [
+                {
+                    url: post.thumbnail || 'https://frendi.web.id/logo.png',
+                },
+            ],
+        },
+    };
+}
+
 export default async function BlogPost({
     params,
 }: {
     params: { slug: string };
 }) {
-    const post = await getPostBySlug(params.slug);
+    const post = await getPostDetail(params.slug);
 
     if (!post) {
         notFound();
     }
-
-    metadata.title = post.title;
-    metadata.description = post.description;
-    metadata.openGraph = {
-        title: post.title,
-        description: post.description,
-        images: [
-            {
-                url: post?.thumbnail || 'https://frendi.web.id/logo.png',
-            },
-        ],
-    };
 
     return (
         <main className="min-h-screen bg-[var(--background-color)]">
@@ -57,7 +75,7 @@ export default async function BlogPost({
                 <div className="mx-auto flex max-w-[960px] flex-1 flex-col gap-12"></div>
                 {/* Hero Section with Full-width Image */}
                 {post.coverImage && (
-                    <div className="relative w-full h-[70vh] mb-8">
+                    <div className="relative w-full h-screen mb-8">
                         <Image
                             src={post.coverImage}
                             alt={post.title}
@@ -94,6 +112,64 @@ export default async function BlogPost({
                                 {post.content.map((block) => {
                                     const { type, id } = block;
                                     const value = block[type as keyof typeof block];
+
+                                    if (type === 'video') {
+                                        if (!value || typeof value !== 'object') {
+                                            return null;
+                                        }
+
+                                        const videoUrl =
+                                            (value as { external?: { url?: string }; file?: { url?: string } })?.external?.url ||
+                                            (value as { external?: { url?: string }; file?: { url?: string } })?.file?.url;
+
+                                        if (!videoUrl) {
+                                            return null;
+                                        }
+
+                                        const embedUrl = getEmbedUrl(videoUrl);
+
+                                        return (
+                                            <div key={id} className="my-10">
+                                                <div className="relative w-full overflow-hidden rounded-2xl bg-slate-900 pb-[56.25%]">
+                                                    <iframe
+                                                        className="absolute inset-0 h-full w-full"
+                                                        src={embedUrl}
+                                                        title="Embedded video"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                        referrerPolicy="strict-origin-when-cross-origin"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    if (type === 'embed') {
+                                        if (!value || typeof value !== 'object') {
+                                            return null;
+                                        }
+
+                                        const embedUrl = getEmbedUrl((value as { url?: string }).url || '');
+
+                                        if (!embedUrl) {
+                                            return null;
+                                        }
+
+                                        return (
+                                            <div key={id} className="my-10">
+                                                <div className="relative w-full overflow-hidden rounded-2xl bg-slate-900 pb-[56.25%]">
+                                                    <iframe
+                                                        className="absolute inset-0 h-full w-full"
+                                                        src={embedUrl}
+                                                        title="Embedded content"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                        referrerPolicy="strict-origin-when-cross-origin"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    }
 
                                     if (
                                         !value ||

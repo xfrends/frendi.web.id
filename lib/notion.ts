@@ -5,57 +5,43 @@ if (!process.env.NOTION_API_KEY) {
   throw new Error('Missing NOTION_API_KEY environment variable');
 }
 
-if (!process.env.NOTION_BLOG_DATABASE_ID) {
-  throw new Error('Missing NOTION_BLOG_DATABASE_ID environment variable');
+if (!process.env.NOTION_BLOG_DATA_SOURCE_ID) {
+  throw new Error('Missing NOTION_BLOG_DATA_SOURCE_ID environment variable');
 }
 
 const notionClient = new Client({
   auth: process.env.NOTION_API_KEY as string,
 });
 
-const databaseId = process.env.NOTION_BLOG_DATABASE_ID as string;
+const dataSourceId = process.env.NOTION_BLOG_DATA_SOURCE_ID as string;
 
-export const getDatabase = cache(async () => {
+export const getDataSource = cache(async () => {
   try {
-
-    const url = `https://api.notion.com/v1/databases/${databaseId}/query`;
-    const options = {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.NOTION_API_KEY}`,
-        'Notion-Version': '2021-08-16',
-        'Content-Type': 'application/json',
-        'accept': 'application/json',
-      },
-      body: JSON.stringify({
-        filter: {
-          property: 'Post Status',
-          select: {
-            equals: 'Publish'
-          }
-        },
-        sorts: [
+    const response = await notionClient.dataSources.query({
+      data_source_id: dataSourceId,
+      filter: {
+        or: [
           {
-            property: 'Publication Date',
-            direction: 'descending'
+            property: 'Post Status',
+            select: {
+              equals: 'Publish'
+            }
           }
-        ]
-      })
-    };
-
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.results;
+        ],
+      },
+      sorts: [
+        {
+          property: 'Publication Date',
+          direction: 'descending',
+        },
+      ],
+    });
+    return response.results;
   } catch (error) {
     console.error('Error querying database:', error);
     return [];
   }
-});
+})
 
 export const getPage = cache(async (pageId: string) => {
   try {
@@ -79,19 +65,4 @@ export const getBlocks = cache(async (blockId: string) => {
     console.error('Error fetching blocks:', error);
     throw error;
   }
-});
-
-export const getPageIdBySlug = cache(async (slug: string) => {
-  const pages = await getDatabase();
-  if (!Array.isArray(pages)) {
-    console.error('Expected pages array but got:', typeof pages);
-    return null;
-  }
-  const page = pages.find((p: any) => {
-    return p.properties?.Slug?.rich_text?.[0]?.plain_text === slug;
-  });
-  if (!page) {
-    return null;
-  }
-  return page.id;
 });

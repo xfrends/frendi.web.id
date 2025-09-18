@@ -2,6 +2,11 @@
 
 import { useEffect } from "react";
 
+/**
+ * Initialize Tawk.to.
+ * 
+ * @see https://github.com/tawk-to/tawk-to/blob/master/docs/README.md
+ */
 export default function TawkChat() {
     useEffect(() => {
         // Initialize Tawk.to
