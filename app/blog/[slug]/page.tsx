@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CopyButton } from '@/components/ui/copy-button';
-import { getDataSourcePageIds } from '@/lib/notion';
 
 const getEmbedUrl = (url: string) => {
     const youtubeRegex = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/i;
