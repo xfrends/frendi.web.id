@@ -44,7 +44,7 @@ export const getDataSource = unstable_cache(
     }
   },
   ['notion:getDataSource'],
-  { revalidate: 60 * 60 * 24 }
+  { revalidate: 60 * 60 * 24, tags: ['notion:dataSource'] }
 );
 
 const cachedGetPage = unstable_cache(
@@ -60,7 +60,7 @@ const cachedGetPage = unstable_cache(
     }
   },
   ['notion:getPage'],
-  { revalidate: 60 * 60 * 24 }
+  { revalidate: 60 * 60 * 24, tags: ['notion:page'] }
 );
 
 export const getPage = async (pageId: string) => cachedGetPage(pageId);
@@ -78,7 +78,7 @@ const cachedGetBlocks = unstable_cache(
     }
   },
   ['notion:getBlocks'],
-  { revalidate: 60 * 60 * 24 }
+  { revalidate: 60 * 60 * 24, tags: ['notion:blocks'] }
 );
 
 export const getBlocks = async (blockId: string) => cachedGetBlocks(blockId);
