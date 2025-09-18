@@ -1,6 +1,8 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BlogList from '@/components/BlogList';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export const metadata = {
     title: 'Blog - Frendi.web.id',
@@ -24,6 +26,13 @@ export default async function BlogPage() {
                             <p className="text-lg text-[var(--text-secondary)] md:text-xl">
                                 Explore articles and case studies on automation, software engineering, and personal growth.
                             </p>
+                            <div className="flex justify-center pt-6">
+                                <Link href="https://tawk.to/frendi" target="_blank" className="block">
+                                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+                                        Free Consultation
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </section>

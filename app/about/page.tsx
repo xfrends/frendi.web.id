@@ -1,7 +1,9 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
 
 export default function AboutPage() {
     const skills = [
@@ -100,16 +102,30 @@ export default function AboutPage() {
     ];
 
     return (
+
         <main className="min-h-screen bg-[var(--background-color)]">
             <Header />
-            <div className="flex-1 px-4 py-16 md:px-40 mt-20">
-                <div className="mx-auto flex flex-1 flex-col gap-12">
-                    {/* Header */}
-                    <div className="text-center">
-                        <h1 className="text-5xl font-bold leading-tight tracking-tight">About Me</h1>
-                        <p className="mt-2 text-lg text-gray-400">My journey in technology and software engineering.</p>
+            <div className="flex-1 mt-0">
+                {/* Hero Section */}
+                <section className="w-full py-20 md:py-32 lg:py-40">
+                    <div className="container mx-auto px-4 text-center md:px-6">
+                        <div className="mx-auto max-w-3xl space-y-4">
+                            <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+                                About Me
+                            </h1>
+                            <p className="text-lg text-[var(--text-secondary)] md:text-xl">
+                                My journey in technology and software engineering.
+                            </p>
+                        </div>
                     </div>
-                </div>
+                    <div className="flex justify-center pt-6">
+                        <Link href="https://tawk.to/frendi" target="_blank" className="block">
+                            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+                                Free Consultation
+                            </Button>
+                        </Link>
+                    </div>
+                </section>
 
                 {/* Profile Section */}
                 <section className="flex mx-auto max-w-[960px] flex-col items-center gap-6 rounded-lg bg-gray-800/50 p-8 mt-16">
