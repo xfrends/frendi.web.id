@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, User, Image as ImageIcon } from 'lucide-react';
 import { getAllPosts } from '@/lib/blog';
+import { format } from 'date-fns';
 import Link from "next/link";
 
 export default async function BlogList() {
@@ -40,7 +41,7 @@ export default async function BlogList() {
                     <div className="flex items-center justify-between text-sm text-slate-400">
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4" />
-                        <span>{post.publishedAt}</span>
+                        <span>{format(new Date(post.publishedAt), 'MMMM d, yyyy')}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4" />

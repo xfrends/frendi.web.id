@@ -1,5 +1,3 @@
-import { BlockObjectResponse, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
-
 export type BlogPost = {
     id: string;
     title: string;
@@ -10,12 +8,14 @@ export type BlogPost = {
     author: string;
     tags: string[];
     publishedAt: string;
-    content?: BlockObjectResponse[];
+    metaTitle?: string;
+    metaDescription?: string;
+    authorEmail?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    content?: string;
 };
 
-export type NotionPage = PageObjectResponse;
-export type NotionBlock = BlockObjectResponse;
-
 export type BlogPostDetail = BlogPost & {
-    content: BlockObjectResponse[];
+    content: string;
 };
