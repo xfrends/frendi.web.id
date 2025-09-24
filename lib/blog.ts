@@ -1,223 +1,227 @@
 import { BlogPost, BlogPostDetail } from '@/types/blog';
-import { getBlocks, getPage, getDataSource } from './notion';
-import { BlockObjectResponse, PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 
-interface DatabasePageProperties {
-  Title: {
-    id: string;
-    type: 'title';
-    title: Array<{
-      plain_text: string;
-    }>;
-  };
-  Slug: {
-    id: string;
-    type: 'rich_text';
-    rich_text: Array<{
-      plain_text: string;
-    }>;
-  };
-  Thumbnail: {
-    id: string;
-    type: 'files';
-    files: Array<{
-      file: {
-        url: string;
-      };
-    }>;
-  };
-  CoverImage: {
-    id: string;
-    type: 'files';
-    files: Array<{
-      file: {
-        url: string;
-      };
-    }>;
-  };
-  Summary: {
-    id: string;
-    type: 'rich_text';
-    rich_text: Array<{
-      plain_text: string;
-    }>;
-  };
-  Author: {
-    id: string;
-    type: 'people';
-    people: Array<{
-      name: string;
-    }>;
-  };
-  Tags: {
-    id: string;
-    type: 'multi_select';
-    multi_select: Array<{
-      name: string;
-    }>;
-  };
-  'Publication Date': {
-    id: string;
-    type: 'date';
-    date: {
-      start: string;
-    };
-  };
-  'Post Status': {
-    id: string;
-    type: 'select';
-    select: {
-      name: string;
-    };
-  };
-}
+const BLOG_API_URL = process.env.BLOG_API_URL ?? 'https://api.frendi.web.id/blogs.php';
+const BLOG_API_KEY = process.env.BLOG_API_KEY ?? process.env.NEXT_PUBLIC_BLOG_API_KEY;
+const DEFAULT_LIST_LIMIT = 20;
 
-interface DatabasePage extends Omit<PageObjectResponse, 'properties'> {
-  properties: DatabasePageProperties & Record<string, unknown>;
-}
-
-const normalizeSlug = (slug?: string) => slug?.trim().toLowerCase() ?? '';
-
-const formatNotionPageId = (value?: string) => {
-  if (!value) return '';
-  const compact = value.replace(/-/g, '');
-  if (!/^[0-9a-f]{32}$/i.test(compact)) {
-    return '';
+const ensureBlogApiKey = () => {
+  if (!BLOG_API_KEY) {
+    throw new Error('Missing BLOG_API_KEY environment variable');
   }
-  return `${compact.slice(0, 8)}-${compact.slice(8, 12)}-${compact.slice(12, 16)}-${compact.slice(16, 20)}-${compact.slice(20)}`;
+  return BLOG_API_KEY;
 };
 
-export async function getAllPosts(): Promise<BlogPost[]> {
-  const pages = await getDataSource();
+type BlogListItemResponse = {
+  slug: string;
+  title: string;
+  thumbnail?: string | null;
+  published_at?: string | null;
+  meta_desc?: string | null;
+  author_name?: string | null;
+};
 
-  if (!Array.isArray(pages)) {
-    console.error('Expected pages array but got:', typeof pages);
-    return [];
+type BlogListResponse = {
+  total_rows: number;
+  total_pages: number;
+  page: number;
+  limit: number;
+  data: BlogListItemResponse[];
+};
+
+type BlogDetailResponse = {
+  title: string;
+  slug: string;
+  thumbnail?: string | null;
+  cover?: string | null;
+  user_id?: number | null;
+  body: string;
+  meta_title?: string | null;
+  meta_desc?: string | null;
+  published_at?: string | null;
+  author_name?: string | null;
+  author_email?: string | null;
+};
+
+type BlogApiErrorResponse = {
+  error?: string;
+};
+
+const parseDate = (value?: string | null) => {
+  if (!value) {
+    return new Date().toISOString();
   }
 
-  return pages.map((page: any) => {
-    const properties = page.properties;
-    return {
-      id: page.id,
-      title: properties?.Title?.title?.[0]?.plain_text || 'Untitled',
-      slug: normalizeSlug(properties?.Slug?.rich_text?.[0]?.plain_text),
-      thumbnail: properties?.Thumbnail?.files?.[0]?.file?.url || '',
-      coverImage: page?.cover?.type === 'external' ? page?.cover?.external?.url : page?.cover?.file?.url || '',
-      description: properties?.Summary?.rich_text?.[0]?.plain_text || '',
-      author: properties?.Author?.people?.[0]?.name || 'Anonymous',
-      tags: properties?.Tags?.multi_select?.map((tag: { name: string }) => tag.name) || [],
-      publishedAt: properties?.['Publication Date']?.date?.start || new Date().toISOString(),
-    };
+  const parsed = new Date(value.replace(' ', 'T'));
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString();
+  }
+
+  return parsed.toISOString();
+};
+
+const mapListItemToBlogPost = (item: BlogListItemResponse): BlogPost => {
+  const normalizedSlug = item.slug?.trim().toLowerCase() ?? '';
+
+  return {
+    id: normalizedSlug,
+    slug: normalizedSlug,
+    title: item.title ?? 'Untitled',
+    thumbnail: item.thumbnail ?? undefined,
+    coverImage: undefined,
+    description: item.meta_desc ?? '',
+    author: item.author_name ?? 'Anonymous',
+    tags: [],
+    publishedAt: parseDate(item.published_at ?? undefined),
+  };
+};
+
+const buildBlogApiUrl = (params?: { slug?: string; page?: number; limit?: number }) => {
+  const url = new URL(BLOG_API_URL);
+  if (params?.slug) {
+    url.searchParams.set('slug', params.slug);
+  }
+  if (params?.page) {
+    url.searchParams.set('page', params.page.toString());
+  }
+  if (params?.limit) {
+    url.searchParams.set('limit', params.limit.toString());
+  }
+  return url;
+};
+
+const fetchFromBlogApi = async <T>(input: string | URL, options?: { cacheTags?: string[]; allowNotFound?: boolean }) => {
+  const apiKey = ensureBlogApiKey();
+  const response = await fetch(typeof input === 'string' ? input : input.toString(), {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      Accept: 'application/json',
+    },
+    next: {
+      revalidate: 60 * 10,
+      tags: options?.cacheTags ?? ['blog:data'],
+    },
   });
-}
 
-export async function getPostDetail(identifier: string): Promise<BlogPostDetail | null> {
-  const candidateId = formatNotionPageId(identifier);
-  const normalizedSlug = normalizeSlug(identifier);
-
-  let page: PageObjectResponse | null = null;
-
-  if (candidateId) {
-    try {
-      page = await getPage(candidateId) as PageObjectResponse;
-    } catch (error) {
-      console.warn(`Failed to fetch page by id ${candidateId}:`, error);
-    }
-  }
-
-  if (!page) {
-    const pages = await getDataSource();
-
-    if (!Array.isArray(pages)) {
-      console.error('Expected pages array but got:', typeof pages);
-      return null;
-    }
-
-    const matchedPage = pages.find((candidate: any) => {
-      const pageSlug = normalizeSlug(candidate?.properties?.Slug?.rich_text?.[0]?.plain_text);
-      if (candidateId && candidate?.id === candidateId) {
-        return true;
-      }
-      return normalizedSlug && pageSlug === normalizedSlug;
-    });
-
-    if (!matchedPage) {
-      console.warn(`No blog post found for identifier: ${identifier}`);
-      return null;
-    }
-
-    page = await getPage(matchedPage.id) as PageObjectResponse;
-  }
-
-  const pageId = page.id;
-  const blocks = await getBlocks(pageId);
-  if (!Array.isArray(blocks)) {
-    console.error('Expected blocks array but got:', typeof blocks);
+  if (response.status === 404 && options?.allowNotFound) {
     return null;
   }
 
-  const { properties } = page as unknown as { properties: DatabasePageProperties };
+  if (!response.ok) {
+    let message = `Blog API request failed with status ${response.status}`;
+    try {
+      const payload = (await response.json()) as BlogApiErrorResponse;
+      if (payload?.error) {
+        message = payload.error;
+      }
+    } catch (cause) {
+      console.warn('Failed to parse blog API error payload', cause);
+    }
+    throw new Error(message);
+  }
 
-  return {
-    id: pageId,
-    title: properties?.Title?.title?.[0]?.plain_text || 'Untitled',
-    slug: properties?.Slug?.rich_text?.[0]?.plain_text || '',
-    thumbnail: properties?.Thumbnail?.files?.[0]?.file?.url || '',
-    coverImage: (() => {
-      const pageCover = page.cover;
-      if (!pageCover) return '';
-      if (pageCover.type === 'external') {
-        return pageCover.external.url;
-      }
-      if (pageCover.type === 'file') {
-        return pageCover.file.url;
-      }
-      return '';
-    })(),
-    description: properties?.Summary?.rich_text?.[0]?.plain_text || '',
-    author: properties?.Author?.people?.[0]?.name || 'Anonymous',
-    tags: properties?.Tags?.multi_select?.map((tag: { name: string }) => tag.name) || [],
-    publishedAt: properties?.['Publication Date']?.date?.start || new Date().toISOString(),
-    content: blocks as BlockObjectResponse[],
-  };
+  return (await response.json()) as T;
+};
+
+const fetchBlogListPage = async ({ page = 1, limit = DEFAULT_LIST_LIMIT }: { page?: number; limit?: number } = {}) => {
+  try {
+    const url = buildBlogApiUrl({ page, limit });
+    const payload = await fetchFromBlogApi<BlogListResponse>(url, {
+      cacheTags: ['blog:list', `blog:list:${page}`, `blog:list:${page}:${limit}`],
+    });
+
+    const items = Array.isArray(payload?.data) ? payload.data.map(mapListItemToBlogPost) : [];
+
+    return {
+      items,
+      pagination: {
+        totalRows: payload?.total_rows ?? items.length,
+        totalPages: payload?.total_pages ?? 1,
+        page: payload?.page ?? page,
+        limit: payload?.limit ?? limit,
+      },
+    };
+  } catch (error) {
+    console.error('Failed to fetch blog list:', error);
+    return {
+      items: [] as BlogPost[],
+      pagination: {
+        totalRows: 0,
+        totalPages: 0,
+        page,
+        limit,
+      },
+    };
+  }
+};
+
+export async function getAllPosts(options?: { page?: number; limit?: number }): Promise<BlogPost[]> {
+  const { items } = await fetchBlogListPage(options);
+  return items;
+}
+
+export async function getPostDetail(identifier: string): Promise<BlogPostDetail | null> {
+  const slug = identifier?.trim().toLowerCase();
+
+  if (!slug) {
+    return null;
+  }
+
+  try {
+    const url = buildBlogApiUrl({ slug });
+    const data = await fetchFromBlogApi<BlogDetailResponse | null>(url, {
+      cacheTags: ['blog:detail', `blog:detail:${slug}`],
+      allowNotFound: true,
+    });
+
+    if (!data || !data.slug) {
+      return null;
+    }
+
+    return {
+      id: data.slug,
+      slug: data.slug,
+      title: data.title ?? 'Untitled',
+      thumbnail: data.thumbnail ?? undefined,
+      coverImage: data.cover ?? undefined,
+      description: data.meta_desc ?? '',
+      author: data.author_name ?? 'Anonymous',
+      tags: [],
+      publishedAt: parseDate(data.published_at ?? undefined),
+      content: data.body ?? '',
+      metaTitle: data.meta_title ?? undefined,
+      metaDescription: data.meta_desc ?? undefined,
+      authorEmail: data.author_email ?? undefined,
+    };
+  } catch (error) {
+    console.error(`Failed to fetch blog post detail for slug ${slug}:`, error);
+    return null;
+  }
 }
 
 export async function fetchLatestPosts(count: number = 2): Promise<BlogPost[]> {
-  const pages = await getDataSource();
-  if (!Array.isArray(pages)) {
-    console.error('Expected pages array but got:', typeof pages);
-    return [];
-  }
-  const posts = pages.map((page: any) => {
-    const properties = page.properties;
-    return {
-      id: page.id,
-      title: properties?.Title?.title?.[0]?.plain_text || 'Untitled',
-      slug: normalizeSlug(properties?.Slug?.rich_text?.[0]?.plain_text),
-      thumbnail: properties?.Thumbnail?.files?.[0]?.file?.url || '',
-      coverImage: page?.cover?.type === 'external' ? page?.cover?.external?.url : page?.cover?.file?.url || '',
-      description: properties?.Summary?.rich_text?.[0]?.plain_text || '',
-      author: properties?.Author?.people?.[0]?.name || 'Anonymous',
-      tags: properties?.Tags?.multi_select?.map((tag: { name: string }) => tag.name) || [],
-      publishedAt: properties?.['Publication Date']?.date?.start || new Date().toISOString(),
-    };
-  });
-
-  return posts
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, count);
+  const { items } = await fetchBlogListPage({ page: 1, limit: count });
+  return items.slice(0, count);
 }
 
 export async function getBlogStaticParams(): Promise<Array<{ slug: string }>> {
-  const pages = await getDataSource();
+  const slugs = new Set<string>();
+  let page = 1;
+  const limit = DEFAULT_LIST_LIMIT;
 
-  if (!Array.isArray(pages)) {
-    console.error('Expected pages array but got:', typeof pages);
-    return [];
+  while (true) {
+    const { items, pagination } = await fetchBlogListPage({ page, limit });
+    items.forEach((post) => {
+      if (post.slug) {
+        slugs.add(post.slug);
+      }
+    });
+
+    if (pagination.totalPages <= page || pagination.totalPages === 0) {
+      break;
+    }
+
+    page += 1;
   }
 
-  return pages
-    .map((page: { id?: string }) => page?.id)
-    .filter((id): id is string => Boolean(id))
-    .map((id) => ({ slug: id }));
+  return Array.from(slugs).map((slug) => ({ slug }));
 }

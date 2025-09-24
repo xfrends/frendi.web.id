@@ -15,10 +15,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ revalidated: false, error: 'Invalid secret' }, { status: 401 });
   }
 
-  // Clear cached Notion payloads so fresh data is fetched on next request
-  revalidateTag('notion:dataSource');
-  revalidateTag('notion:page');
-  revalidateTag('notion:blocks');
+  // Clear cached blog API payloads so fresh data is fetched on next request
+  revalidateTag('blog:list');
+  revalidateTag('blog:detail');
 
   // Refresh list/detail routes
   revalidatePath('/blog');
